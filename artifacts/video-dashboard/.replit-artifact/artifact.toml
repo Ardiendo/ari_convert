@@ -1,6 +1,6 @@
 kind = "data-app"
 previewPath = "/video-dashboard/"
-title = "Video Creator Dashboard"
+title = "ari_convert"
 version = "1.0.0"
 id = "artifacts/video-dashboard"
 router = "path"
