@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "GcRs02XxXl-sgSZxGbke3"
+uri = "file://video_final.mp4"
+type = "video"
+title = "video_final.mp4"
