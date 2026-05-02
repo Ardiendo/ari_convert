@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: video
+    description: Video creation operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,126 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /video/images:
+    get:
+      operationId: listImages
+      tags: [video]
+      summary: List uploaded images
+      description: Returns all images available for video creation
+      responses:
+        "200":
+          description: List of images
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageList"
+
+  /video/upload:
+    post:
+      operationId: uploadImage
+      tags: [video]
+      summary: Upload an image
+      description: Upload a single image file (multipart/form-data, field name "file")
+      responses:
+        "200":
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /video/images/{filename}:
+    delete:
+      operationId: deleteImage
+      tags: [video]
+      summary: Delete an image
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Image not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /video/generate:
+    post:
+      operationId: generateVideo
+      tags: [video]
+      summary: Start video generation
+      description: Triggers video creation with the specified settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoSettings"
+      responses:
+        "200":
+          description: Job started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /video/status:
+    get:
+      operationId: getJobStatus
+      tags: [video]
+      summary: Get current job status
+      description: Returns the status of the current video generation job
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+
+  /video/download:
+    get:
+      operationId: downloadVideo
+      tags: [video]
+      summary: Download generated video
+      description: Returns info and URL for downloading the generated video
+      responses:
+        "200":
+          description: Video ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadInfo"
+        "404":
+          description: No video available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +153,110 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ImageItem:
+      type: object
+      properties:
+        filename:
+          type: string
+        size:
+          type: number
+        url:
+          type: string
+        modifiedAt:
+          type: string
+      required: [filename, size, url, modifiedAt]
+
+    ImageList:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageItem"
+        count:
+          type: number
+      required: [images, count]
+
+    UploadResult:
+      type: object
+      properties:
+        filename:
+          type: string
+        size:
+          type: number
+        url:
+          type: string
+      required: [filename, size, url]
+
+    VideoSettings:
+      type: object
+      properties:
+        fps:
+          type: number
+        duration:
+          type: number
+        transition:
+          type: string
+          enum: [none, fade, crossfade]
+        transitionTime:
+          type: number
+        resize:
+          type: string
+          nullable: true
+        sort:
+          type: string
+          enum: [name, date, date_desc]
+        outputFilename:
+          type: string
+      required: [fps, duration, transition, transitionTime, sort]
+
+    JobStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [idle, running, done, error]
+        progress:
+          type: string
+        startedAt:
+          type: string
+          nullable: true
+        finishedAt:
+          type: string
+          nullable: true
+        outputFile:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+      required: [status, progress]
+
+    DownloadInfo:
+      type: object
+      properties:
+        filename:
+          type: string
+        size:
+          type: number
+        url:
+          type: string
+      required: [filename, size, url]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success, message]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]

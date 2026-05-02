@@ -14,3 +14,87 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns all images available for video creation
+ * @summary List uploaded images
+ */
+export const ListImagesResponse = zod.object({
+  images: zod.array(
+    zod.object({
+      filename: zod.string(),
+      size: zod.number(),
+      url: zod.string(),
+      modifiedAt: zod.string(),
+    }),
+  ),
+  count: zod.number(),
+});
+
+/**
+ * Upload a single image file (multipart/form-data, field name "file")
+ * @summary Upload an image
+ */
+export const UploadImageResponse = zod.object({
+  filename: zod.string(),
+  size: zod.number(),
+  url: zod.string(),
+});
+
+/**
+ * @summary Delete an image
+ */
+export const DeleteImageParams = zod.object({
+  filename: zod.coerce.string(),
+});
+
+export const DeleteImageResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string(),
+});
+
+/**
+ * Triggers video creation with the specified settings
+ * @summary Start video generation
+ */
+export const GenerateVideoBody = zod.object({
+  fps: zod.number(),
+  duration: zod.number(),
+  transition: zod.enum(["none", "fade", "crossfade"]),
+  transitionTime: zod.number(),
+  resize: zod.string().nullish(),
+  sort: zod.enum(["name", "date", "date_desc"]),
+  outputFilename: zod.string().optional(),
+});
+
+export const GenerateVideoResponse = zod.object({
+  status: zod.enum(["idle", "running", "done", "error"]),
+  progress: zod.string(),
+  startedAt: zod.string().nullish(),
+  finishedAt: zod.string().nullish(),
+  outputFile: zod.string().nullish(),
+  error: zod.string().nullish(),
+});
+
+/**
+ * Returns the status of the current video generation job
+ * @summary Get current job status
+ */
+export const GetJobStatusResponse = zod.object({
+  status: zod.enum(["idle", "running", "done", "error"]),
+  progress: zod.string(),
+  startedAt: zod.string().nullish(),
+  finishedAt: zod.string().nullish(),
+  outputFile: zod.string().nullish(),
+  error: zod.string().nullish(),
+});
+
+/**
+ * Returns info and URL for downloading the generated video
+ * @summary Download generated video
+ */
+export const DownloadVideoResponse = zod.object({
+  filename: zod.string(),
+  size: zod.number(),
+  url: zod.string(),
+});

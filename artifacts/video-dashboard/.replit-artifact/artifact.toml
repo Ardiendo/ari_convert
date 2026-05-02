@@ -1,0 +1,31 @@
+kind = "data-app"
+previewPath = "/video-dashboard/"
+title = "Video Creator Dashboard"
+version = "1.0.0"
+id = "artifacts/video-dashboard"
+router = "path"
+
+[[integratedSkills]]
+name = "data-visualization"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/video-dashboard/" ]
+localPort = 22192
+
+[services.development]
+run = "pnpm --filter @workspace/video-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/video-dashboard", "run", "build" ]
+publicDir = "artifacts/video-dashboard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22192"
+BASE_PATH = "/video-dashboard/"

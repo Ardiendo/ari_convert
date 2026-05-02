@@ -5,18 +5,30 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  DownloadInfo,
+  ErrorResponse,
+  HealthStatus,
+  ImageList,
+  JobStatus,
+  SuccessResponse,
+  UploadResult,
+  VideoSettings,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +104,485 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns all images available for video creation
+ * @summary List uploaded images
+ */
+export const getListImagesUrl = () => {
+  return `/api/video/images`;
+};
+
+export const listImages = async (options?: RequestInit): Promise<ImageList> => {
+  return customFetch<ImageList>(getListImagesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListImagesQueryKey = () => {
+  return [`/api/video/images`] as const;
+};
+
+export const getListImagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listImages>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listImages>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListImagesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listImages>>> = ({
+    signal,
+  }) => listImages({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listImages>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListImagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listImages>>
+>;
+export type ListImagesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List uploaded images
+ */
+
+export function useListImages<
+  TData = Awaited<ReturnType<typeof listImages>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listImages>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListImagesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Upload a single image file (multipart/form-data, field name "file")
+ * @summary Upload an image
+ */
+export const getUploadImageUrl = () => {
+  return `/api/video/upload`;
+};
+
+export const uploadImage = async (
+  options?: RequestInit,
+): Promise<UploadResult> => {
+  return customFetch<UploadResult>(getUploadImageUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getUploadImageMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadImage>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadImage>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["uploadImage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadImage>>,
+    void
+  > = () => {
+    return uploadImage(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadImageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadImage>>
+>;
+
+export type UploadImageMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Upload an image
+ */
+export const useUploadImage = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadImage>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadImage>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getUploadImageMutationOptions(options));
+};
+
+/**
+ * @summary Delete an image
+ */
+export const getDeleteImageUrl = (filename: string) => {
+  return `/api/video/images/${filename}`;
+};
+
+export const deleteImage = async (
+  filename: string,
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(getDeleteImageUrl(filename), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteImageMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteImage>>,
+    TError,
+    { filename: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteImage>>,
+  TError,
+  { filename: string },
+  TContext
+> => {
+  const mutationKey = ["deleteImage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteImage>>,
+    { filename: string }
+  > = (props) => {
+    const { filename } = props ?? {};
+
+    return deleteImage(filename, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteImageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteImage>>
+>;
+
+export type DeleteImageMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Delete an image
+ */
+export const useDeleteImage = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteImage>>,
+    TError,
+    { filename: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteImage>>,
+  TError,
+  { filename: string },
+  TContext
+> => {
+  return useMutation(getDeleteImageMutationOptions(options));
+};
+
+/**
+ * Triggers video creation with the specified settings
+ * @summary Start video generation
+ */
+export const getGenerateVideoUrl = () => {
+  return `/api/video/generate`;
+};
+
+export const generateVideo = async (
+  videoSettings: VideoSettings,
+  options?: RequestInit,
+): Promise<JobStatus> => {
+  return customFetch<JobStatus>(getGenerateVideoUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(videoSettings),
+  });
+};
+
+export const getGenerateVideoMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateVideo>>,
+    TError,
+    { data: BodyType<VideoSettings> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateVideo>>,
+  TError,
+  { data: BodyType<VideoSettings> },
+  TContext
+> => {
+  const mutationKey = ["generateVideo"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateVideo>>,
+    { data: BodyType<VideoSettings> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateVideo(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateVideoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateVideo>>
+>;
+export type GenerateVideoMutationBody = BodyType<VideoSettings>;
+export type GenerateVideoMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Start video generation
+ */
+export const useGenerateVideo = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateVideo>>,
+    TError,
+    { data: BodyType<VideoSettings> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateVideo>>,
+  TError,
+  { data: BodyType<VideoSettings> },
+  TContext
+> => {
+  return useMutation(getGenerateVideoMutationOptions(options));
+};
+
+/**
+ * Returns the status of the current video generation job
+ * @summary Get current job status
+ */
+export const getGetJobStatusUrl = () => {
+  return `/api/video/status`;
+};
+
+export const getJobStatus = async (
+  options?: RequestInit,
+): Promise<JobStatus> => {
+  return customFetch<JobStatus>(getGetJobStatusUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetJobStatusQueryKey = () => {
+  return [`/api/video/status`] as const;
+};
+
+export const getGetJobStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof getJobStatus>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getJobStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetJobStatusQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobStatus>>> = ({
+    signal,
+  }) => getJobStatus({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getJobStatus>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetJobStatusQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getJobStatus>>
+>;
+export type GetJobStatusQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get current job status
+ */
+
+export function useGetJobStatus<
+  TData = Awaited<ReturnType<typeof getJobStatus>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getJobStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetJobStatusQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns info and URL for downloading the generated video
+ * @summary Download generated video
+ */
+export const getDownloadVideoUrl = () => {
+  return `/api/video/download`;
+};
+
+export const downloadVideo = async (
+  options?: RequestInit,
+): Promise<DownloadInfo> => {
+  return customFetch<DownloadInfo>(getDownloadVideoUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDownloadVideoQueryKey = () => {
+  return [`/api/video/download`] as const;
+};
+
+export const getDownloadVideoQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadVideo>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof downloadVideo>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDownloadVideoQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadVideo>>> = ({
+    signal,
+  }) => downloadVideo({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadVideo>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type DownloadVideoQueryResult = NonNullable<
+  Awaited<ReturnType<typeof downloadVideo>>
+>;
+export type DownloadVideoQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Download generated video
+ */
+
+export function useDownloadVideo<
+  TData = Awaited<ReturnType<typeof downloadVideo>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof downloadVideo>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDownloadVideoQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

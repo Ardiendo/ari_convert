@@ -8,3 +8,83 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ImageItem {
+  filename: string;
+  size: number;
+  url: string;
+  modifiedAt: string;
+}
+
+export interface ImageList {
+  images: ImageItem[];
+  count: number;
+}
+
+export interface UploadResult {
+  filename: string;
+  size: number;
+  url: string;
+}
+
+export type VideoSettingsTransition =
+  (typeof VideoSettingsTransition)[keyof typeof VideoSettingsTransition];
+
+export const VideoSettingsTransition = {
+  none: "none",
+  fade: "fade",
+  crossfade: "crossfade",
+} as const;
+
+export type VideoSettingsSort =
+  (typeof VideoSettingsSort)[keyof typeof VideoSettingsSort];
+
+export const VideoSettingsSort = {
+  name: "name",
+  date: "date",
+  date_desc: "date_desc",
+} as const;
+
+export interface VideoSettings {
+  fps: number;
+  duration: number;
+  transition: VideoSettingsTransition;
+  transitionTime: number;
+  resize?: string | null;
+  sort: VideoSettingsSort;
+  outputFilename?: string;
+}
+
+export type JobStatusStatus =
+  (typeof JobStatusStatus)[keyof typeof JobStatusStatus];
+
+export const JobStatusStatus = {
+  idle: "idle",
+  running: "running",
+  done: "done",
+  error: "error",
+} as const;
+
+export interface JobStatus {
+  status: JobStatusStatus;
+  progress: string;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  outputFile?: string | null;
+  error?: string | null;
+}
+
+export interface DownloadInfo {
+  filename: string;
+  size: number;
+  url: string;
+}
+
+export interface SuccessResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface ErrorResponse {
+  error: string;
+}
