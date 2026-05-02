@@ -6,8 +6,9 @@ import { spawn } from "child_process";
 
 const router: IRouter = Router();
 
-const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
-const OUTPUT_DIR = path.resolve(process.cwd(), "outputs");
+const DATA_DIR = path.resolve(process.cwd(), "data");
+const UPLOADS_DIR = path.join(DATA_DIR, "images");
+const OUTPUT_DIR = path.join(DATA_DIR, "videos");
 
 for (const dir of [UPLOADS_DIR, OUTPUT_DIR]) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
